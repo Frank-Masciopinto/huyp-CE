@@ -1,5 +1,5 @@
 'use strict';
-
+console.log("Inject.js is Here")
 var monitor = window.monitor;
 var capture = window.capture;
 var guide = window.guide;

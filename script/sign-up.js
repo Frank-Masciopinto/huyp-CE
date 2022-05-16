@@ -95,7 +95,9 @@ function call_API_SignUp(account_details) {
 })
 .then(function (json) { 
 	chrome.runtime.sendMessage({message: "Open Payment Page"})
-	window.close()
+	setTimeout(() => {
+		window.close()
+	}, 2000);
 })
 
 .catch(function (err) {
@@ -106,6 +108,8 @@ function call_API_SignUp(account_details) {
 		message: JSON.stringify(err),
 		priority: 1
 	})
+	console.log("Catched promise error")
+	console.log(err)
 	document.getElementById("error-signup").innerText = JSON.stringify(err)
 }
 )}

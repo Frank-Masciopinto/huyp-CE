@@ -14,6 +14,28 @@ i {
   border-radius: 9999px;
 }
 
+.error_button {
+  background: royalblue;
+  margin: auto;
+  margin-bottom: -50px;
+  position: relative;
+}
+
+.error-message {
+  height: 149px;
+  width: -webkit-fill-available;
+  position: absolute;
+  z-index: 9;
+  display: grid;
+  margin-top: 403px;
+  border-radius: 30px;
+  line-height: 150px;
+  text-align: center;
+  color: royalblue;
+  font-weight: bold;
+  font-size: x-large;
+}
+
 .container__progress {
   /* Center the content */
   align-items: center;

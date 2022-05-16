@@ -18,20 +18,49 @@ function check_NaN(val) {
 
 chrome.runtime.sendMessage({message: "Fetch_similar_products_for_display"}, async function(response) {
     console.log(response)
-    try {
-        all_products_fetched = response.all_products_fetched.results
-        display_products(response.all_products_fetched.results)
+    if (response.error == true) {
+        console.log("Error = true")
+        console.log(response.all_products_fetched)
+
+        all_products_fetched = response.all_products_fetched
+        document.querySelector("#display-products").setAttribute("style", "filter: blur(7px)")
+        display_products(response.all_products_fetched)
+        document.querySelector("body").setAttribute("style", "position: relative")
+        let error_message_div = document.createElement("div")
+        error_message_div.className = "error-message"
+        error_message_div.innerText = "Your Free Trial Has Expired"
+        let error_button = document.createElement("button")
+        error_button.className = "error_button"
+        error_button.innerText = "PAY"
+        error_button.onclick = function(){ chrome.runtime.sendMessage({message: "Open Payment Page"})}
+        error_message_div.prepend(error_button)
+        document.querySelector("body").prepend(error_message_div)
     }
-    catch {
-        console.log("Catch, undefined products_fetched, await for localstorage...")
-        all_products_fetched = await LS.getItem("prev_search_results")
-        console.log(all_products_fetched)
-        display_products(all_products_fetched.results)
+    else {
+        try {
+            all_products_fetched = response.all_products_fetched.results
+            display_products(response.all_products_fetched.results)
+        }
+        catch {
+            console.log("Catch, undefined products_fetched, await for localstorage...")
+            all_products_fetched = await LS.getItem("prev_search_results")
+            console.log(all_products_fetched)
+            display_products(all_products_fetched.results)
+        }
     }
 })
+function containsObject(obj, list) {
+    var i;
+    for (i = 0; i < list.length; i++) {
+        if (list[i].img == obj.img) {
+            return true;
+        }
+    }
 
+    return false;
+}
 
-async function display_one_product(product_obj, array_index) {
+async function display_one_product(product_obj, array_index, all_favorites_products) {
     return new Promise((res, rej) => {
         let container_single_product = document.createElement("div")
         container_single_product.className += "flex-space-evenly"
@@ -60,6 +89,12 @@ async function display_one_product(product_obj, array_index) {
         let favorite_btn = document.createElement("i")
         favorite_btn.className = "fa-solid margins heart-margin fa-heart fa-xl"
         favorite_btn.setAttribute("index", array_index)
+        console.log("***All FAVORITES***")
+        console.log(all_favorites_products)
+        if (containsObject(product_obj, all_favorites_products)) {
+            console.log("Inside make red fav")
+            favorite_btn.setAttribute("style", "color:red;")
+        }
         //Sharing Icon
         let twitter_btn = document.createElement("i")
         twitter_btn.className = "fa-brands margins fa-twitter-square fa-xl"
@@ -114,8 +149,9 @@ async function display_one_product(product_obj, array_index) {
 }
 
 async function display_products(all_products_array) {
+    let all_favorites_products = await LS.getItem("all_favorites")
     for (let i=0; i<all_products_array.length; i++) {
-        await display_one_product(all_products_array[i], i)
+        await display_one_product(all_products_array[i], i, all_favorites_products)
     }
     document.querySelector("#single-product").id = "first-product"
 

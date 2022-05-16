@@ -13,13 +13,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
   }
 })
 
-document.addEventListener('keypress',function(key){
-  console.log(key.key)
-  let keyvalue = key.key
-  chrome.runtime.sendMessage(null,keyvalue,(response)=>{
-  console.log("***----HERE---***")
-          })
-      })
 
 var iframe = document.createElement('iframe'); 
 iframe.style.height = "100%";
@@ -32,7 +25,6 @@ iframe.style.zIndex = "9000000000000000000";
 iframe.style.border = "1px solid rgb(0, 122, 236)"; 
 iframe.style.borderRadius = "50px";
 iframe.src = chrome.runtime.getURL("html/slider-search.html")
-
 
 function toggle(){
   document.body.appendChild(iframe);

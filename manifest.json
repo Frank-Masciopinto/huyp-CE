@@ -1,6 +1,6 @@
 {
   "name": "Huyp",
-  "version": "1.0",
+  "version": "1.02",
   "description": "Affordable Style",
   "manifest_version": 3,
   "content_scripts": [{
@@ -8,13 +8,12 @@
     "js": [ "script/content.js" ],
     "all_frames": true
 }],
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu9EZqBuJ7rZUToLfKunmB4PH5mjuTifYfWl5mKa/UYglotSmyaaUMjBBhip0Jq78AqmV/4aTV/09WBHQ5fUVPOD33gH8UpfqRsB4hAkIOLp26AwwK8evL4GuSMUb2cojYu9gkVeemh3IPLMkjk1uMrtOJ+QipTuso+T3JxIHckLJBHWuPS7jzW7AOwiyPwHTkOnZJJtloPDMwRCVMFBO2kt1aERxJNuUzYrfOYf9vOc0BBswRw2y4FaGr6GN1GpfDUas+aKaOUpGz0T2nLF2yKTNWtM1xiK1J/yiB3uTzHq98AeLn4Q2vhX3WaJwTczmolqtM+FPjIFVBmG1Mi+DmQIDAQAB",
   "background":
     {
       "service_worker": "background.js"
     },
     "permissions": [
-      "tabs", "activeTab", "notifications", "storage", "scripting"],
+      "activeTab", "notifications", "storage", "scripting"],
    
    "host_permissions": [
      "http://*/*",

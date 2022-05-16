@@ -4,127 +4,179 @@ const LS = {
     setItem: (key, val) => chrome.storage.local.set({[key]: val}),
     removeItems: keys => chrome.storage.local.remove(keys),
   };
-
-let free_trial_no_days = 14
+let  api_trialTime_is_expired = "http://143.198.149.10/trial_countdown/?"
+let free_trial_no_days = 2
 importScripts('ExtPay.js')
-var extpay = ExtPay('hochhhgdlncmknchdngodkccneibpopn'); 
-
+var extpay = ExtPay('cjieiphfkblcbamafhefbjmelahlmfel'); 
+let error_message = undefined
 let injected_tab_id;
 let products_fetched;
 let api_image_URL = "https://huypbackend.herokuapp.com/similar_items/"
 let api_add_favorites = "https://huypbackend.herokuapp.com/favorites_add/?"
 let api_delete_favorites = "https://huypbackend.herokuapp.com/favorites_delete/?"
 let api_SignUp = "https://huypbackend.herokuapp.com/user_register/?"
-// chrome.tabs.onActivated.addListener(tab => {
-//     //Check if Linkedin is in the url
-//     chrome.tabs.get(tab.tabId, function(tab) {
-//         if(chrome.runtime.lastError) {
-//             console.log("Inside runtime error")
-//         }
-//         else {
-//             try {
-//                 inject_Js(tab.url, tab.tabId)
-//             }
-//             catch {
-//             console.log("Inside tab is  undefined")
-//             }
-//         }
-//     })
-//     function inject_Js(link, tabId){
-//         if (link.includes("chrome://") || link.includes("developer.chrome.com") || link.includes("chrome-extension://") || link.includes("chrome-error://") || link.includes("chrome.google.com/webstore") || link.includes("about:") || link.includes("addons.mozilla.org") || link.includes("moz-extension://")){
-//             console.log("Inside google chrome")
-//         }
-//         else {
-//             check_than_Insert_JS("content.js", "google.css", tabId)
-//         }
-//     }});
-
-// //On Every new tab Update
-// chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-
-//     var existCondition = setInterval(function() {
-//         //console.log("CHECK HERE: ", changeInfo)
-//         if (changeInfo.status == "complete") {
-//            console.log("DOM Loaded!");
-//            clearInterval(existCondition);
-//            inject_javascript();
-//         }
-//        }, 2000);
-
-
-//     function inject_javascript(){
-//         console.log("Inside On Updated")
-//         //Check if Linkedin is in the url
-//             chrome.tabs.get(tabId, function(tab) {
-//                 if(chrome.runtime.lastError) {
-//                     console.log("Inside runtime error")
-//                 }
-//                 else {
-//                     try {
-//                         inject_Js(tab.url, tabId)
-//                     }
-//                     catch {
-//                     console.log("Inside tab is  undefined")
-//                     }
-//                 }
-//             })
-
-
-
-//         function inject_Js(link, tabId){
-//             console.log("Inside Inject js onupdated")
-
-//             if (link.includes("chrome://") || link.includes("chrome-extension://") || link.includes("developer.chrome.com") || link.includes("chrome.google.com/webstore") || link.includes("about:") || link.includes("addons.mozilla.org") || link.includes("moz-extension://")){
-//                 console.log("UPDATED Inside google chrome")
-//             }
-//             else {
-//                 check_than_Insert_JS("content.js", "google.css", tabId)
-//             }
-
-//     }}});
-// function to insert scripts by checking if they are already injected first
-function check_than_Insert_JS(js_File_Name, css_File_Name, tabId){
-
-    let content_Message = "are_you_there_content_script?"
-
-    chrome.tabs.sendMessage(tabId, {message: content_Message}, function(msg) {
-        msg = msg || {};
-        if(chrome.runtime.lastError) {
-            console.log("Inside runtime error, NO SCRIPT IS THERE! ------+++++ new function---> " + js_File_Name)
-            if (css_File_Name != "NO_FILE")  {
-                chrome.scripting.insertCSS({
-                    target: {tabId: tabId},
-                    files: ["./style/"+css_File_Name]
-                  }, () => {
-                    const lastError = chrome.runtime.lastError;
-                    if (lastError) {
-                      return notify(lastError);
-                    }
-                })}
-            chrome.scripting.executeScript({
-                target: {tabId: tabId},
-                files: ["./script/"+js_File_Name]
-            });
-        }
-        else if(msg.status != 'yes') {
-            if (css_File_Name != "NO_FILE")  {
-                chrome.scripting.insertCSS({
-                    target: {tabId: tabId},
-                    files: ["./style/"+css_File_Name]
-                  }, () => {
-                    const lastError = chrome.runtime.lastError;
-                    if (lastError) {
-                      return notify(lastError);
-                    }
-                })}
-            chrome.scripting.executeScript({
-                target: {tabId: tabId},
-                files: ["./script/"+js_File_Name]
-            });
-        }
-        else {console.log("already injected js => " + js_File_Name)}
-    });
-}
+let error_fake_items = [
+    {
+        "brand": "otrium.it",
+        "description": "Liliya Blouse White Black",
+        "img": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQnhjVOONMOa3xATp8pvrPfR5Y4Y5GCwAVJX4hoaerdUDgPEVwE4MMZMFI93SFUvBY7R-a8kLYF6b8FgS_y3OpOVuocS-8u8s24X7Xhys_w1iwWRz4tUjyt&usqp=CAE",
+        "link": "https://www.otrium.it/product/liliya-blouse-white-black&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjYssrvrdL3AhWuK0QIHSXND-0Q2SkIrww&usg=AOvVaw3Xt948E8SuK-2xrTWa0KSM",
+        "price": 34.99,
+        "price_str": "34,99 €"
+    },
+    {
+        "brand": "Zalando.it",
+        "description": "Illusive London Core Grandad Shirt - Black",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRErjspm4dbHYLz-mXG2gcoibEdi5-LkY2J7RYlJ3b-xjdl2afVPQ4E7mrGwZugasPMDRSQdhb01EWhQgGpXVmOUF67R0TrP5L8gMx2crlid2wMP7LfNSsC&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/9320232559110409635",
+        "price": 22.48,
+        "price_str": "22,48 €"
+    },
+    {
+        "brand": "PUMA.com",
+        "description": "Puma Power Half Placket Felpa black, Donna, Taglia: XS, Nero",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRjzAN5iDkin4S6iIvZqZ846LlYUzisu-ZFJp_0YI1lWlxjrTmGQfVqaXBmVcenLiWCtn22gGH-zST4MNKB46EweVrkbIviT2eVnf80gHUVZaFjJIudgAmD&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/2201870245669166361",
+        "price": 34.95,
+        "price_str": "34,95 €"
+    },
+    {
+        "brand": "aboutyou.it",
+        "description": "Classic Checked Shirt Black/Red - Urban Classics TB4699 - Taglia 5XL",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcS0Bgc6UWRXNffuKN1QRt95vV2OutReorP4j2efe3mS01idwUnCHHu0mrZc-WRnJbvffXncRl7iUkwoSJgTqmPL4Kuk93iE&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/10517099169210977054",
+        "price": 49.9,
+        "price_str": "49,90 €"
+    },
+    {
+        "brand": "fruugo.it",
+        "description": "Gaoguang Cintura a righe da Uomo Placket Cerniera Decorazione Personalità piccola Tasca per I piedi Pantaloni Casual Nero M",
+        "img": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSQEwUu899V1d8Nhbyv8qplbpVIkPRftVjVkWIqdo5mKYYfEhVR9T9i0PuYculcGiTjOJe79kPQG6u1P_oJovM9GUWhNCUKRdAT5w3le7zWeM7p2_Iv2CrShA&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/17549561377711849775",
+        "price": 41.95,
+        "price_str": "41,95 €"
+    },
+    {
+        "brand": "Tablas Surf Shop",
+        "description": "Lihue Eco SS Shirt Black by Vissla",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRdlg1_igQKTVGLZAy3SdDrH4waErEQ8CVRQjVDDP6NnMsyLAwu6YWzfcZFoFggRQYT6c90DCBezOoZk0RAwxpUcg0qOlVIjZOrmDxSY-1n&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/15772077042876518626",
+        "price": 41.35,
+        "price_str": "41,35 €"
+    },
+    {
+        "brand": "otrium.it",
+        "description": "Skirt FRONT Placket",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSoncj2mQYbJXDS7KvOGoBc7BGjUK3-v-ofEfx7hl0vKqJlatpkpLA3cz2AJWDcqouPXp8xx7pyjkyemZ0bEXV6Cq0CJJFQtMbj0CEO4-GGtgfRSSksoWlq&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/16640369745882604230",
+        "price": 47.99,
+        "price_str": "47,99 €"
+    },
+    {
+        "brand": "eBay.it",
+        "description": "kywommnz Women Long Sleeve Round Neck Shirt, Shirt with Pocket and Placket,",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSyjgXfRxk8MBEGjXtzez0zleYEFqO6U_5QmuzbRiG9hPrJs4cYOLsD6pvE9gnRjiF9pJZxV78KMB3UTofIEA1DDn6g3EoOYKC7-rbFI63R&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/15196648689532661562",
+        "price": 89.05,
+        "price_str": "89,05 €"
+    },
+    {
+        "brand": "Zalando.it",
+        "description": "Jack & Jones Camicia Manica lunga Black Summer Half Placket M",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcR45YMmyHiKEZ2pSCgT8IB-x62MUvGGALc-H3f-SRBtiwrb8gGnPwVicd1hofoagTYc0xt17qcJGJMmXlJvZ9MEXkldSi_DELjBqeC6wBicX8wEPWPra-wHPg&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/15336625572062692740",
+        "price": 39.99,
+        "price_str": "39,99 €"
+    },
+    {
+        "brand": "Grandado ITA",
+        "description": "EWQ/uomini 'usura astinenza nessun tasto nero nicchia disegno della maglia nera per il maschio ins all-partita scialle stile gilet per il maschio ",
+        "img": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcT9S3Vbw6aHtOJT1nffNEVcvS8fRgBW1RquhI0cJdbKiMpHEH1lVRsjHdmjgrl8GDc2PVmtkGQGu0DWE7PaJ41AL85w97pgVsAfGHxOd__7ZRTkDL0X3Dqr&usqp=CAE",
+        "link": "https://ita.grandado.com/products/ewq-uomini-usura-astinenza-nessun-tasto-nero-nicchia-disegno-della-maglia-nera-per-il-maschio-ins-all-partita-scialle-stile-gilet-per-il-maschio-9y3233%3Fvariant%3DUHJvZHVjdFZhcmlhbnQ6Mjg4NTg1MjA&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjYssrvrdL3AhWuK0QIHSXND-0Q2SkInw4&usg=AOvVaw17nH7sliQQLvDrIDNXDSca",
+        "price": 40.89,
+        "price_str": "40,89 €"
+    },
+    {
+        "brand": "OnlineGolf IT",
+        "description": "Polo Greg Norman moonbeam, maschile, black, Medium Online Golf",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcReAkS6wBtkwlbXi_FLO335ukecCliBnyfjdMeLZI16YzHc8jWtSAt50yTJPaHJuVpWwDD8prOx2Ti8vCfVvinRQnKx5fsKhsiZj0g1jdmqkuR4CX6lRoysJg&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/11466833012977266313",
+        "price": 22.95,
+        "price_str": "22,95 €"
+    },
+    {
+        "brand": "COS",
+        "description": "COS Men's Regular-Fit Hemp Shirt - Black - Camicia",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTcrEPSTkfOap-JmG5ydyOus-Ce44Zrq4NFlx-qvcjOZVPFajcO_y7G_MYD6WutkB_ICn_vMxLq5btEDI6OCdnrOwVlOVdrsKf20OPKO8-6M90C4-CHyNRI&usqp=CAE",
+        "link": "https://www.google.com/aclk?sa=l&ai=DChcSEwjTsc_vrdL3AhUtHq0GHTi2Do0YABAvGgJwdg&sig=AOD64_0fBF8ThaPmK1yCyyBoWv_R83hAJw&ctype=5&q=&ved=0ahUKEwjYssrvrdL3AhWuK0QIHSXND-0Q9A4I1xE&adurl=",
+        "price": 59,
+        "price_str": "59,00 €"
+    },
+    {
+        "brand": "EMP-Online.it",
+        "description": "Black Premium by EMP Grey T-shirt with wash, Print and Button Placket T-shirt Grigio male M",
+        "img": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQp675MDCoNCdB1XeqLpVmQxsXuZhRWz3BvgKva8g91cNtTzrUFoJKUHwcIx3aGqsLl8-fP8TeJskGiDXafcEJPUUwDYAXeEbn1I-yK4q3yd1QAjA_MKuVt&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/9275727619560964590",
+        "price": 23.99,
+        "price_str": "23,99 €"
+    },
+    {
+        "brand": "Wordans.it",
+        "description": "Basic College Jacket Black/White - Build Your Brand BB004 - Taglia XS",
+        "img": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQge2YNDSSJ8moJ21dnmdi0n9pBYYgXt-q6qHx9-bDssBiTj0GSkrxtN6-0s17CMX7J9ZamodtMjvjXRq5t7i7ITnd3yhrjJ4lEG_p6b4LDZOaiu6uLvWJp&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/8772677749093481441",
+        "price": 25.08,
+        "price_str": "25,08 €"
+    },
+    {
+        "brand": "COS",
+        "description": "COS Men's Relaxed-Fit Knitted Polo Shirt - Black - Camicia",
+        "img": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSRYleQThq4d-AEJYjDo6Gc9Yn0aXOXlu4B1SQAEvCSR1ChoQLkp7HplRg3JepGaVwqFp1-T4oua2zNmkrP9IQrwKav_FFinrnIWk18PUviVAfLIkSowrJnfg&usqp=CAE",
+        "link": "https://www.google.com/aclk?sa=l&ai=DChcSEwjTsc_vrdL3AhUtHq0GHTi2Do0YABA3GgJwdg&sig=AOD64_0dp87xB6raFKlWDUOzNJGfEYiv3Q&ctype=5&q=&ved=0ahUKEwjYssrvrdL3AhWuK0QIHSXND-0Q9A4I5BE&adurl=",
+        "price": 59,
+        "price_str": "59,00 €"
+    },
+    {
+        "brand": "Zalando.it",
+        "description": "Marc O'Polo Short Sleeve Button Placket Polo Dark navy, Uomo, Taglia: XS, Blu scuro",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcR4XPwmkB1PNliDDpRUWszvbtGcqeiZCFMcJjNjpAX26oXr8tQhM3wEYlggh4LjTKfAugEMY7TN8LNrSBBet1hxV1m_0jYogaBaft-yBIF4IspMBE8u9N68&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/9667038961219185685",
+        "price": 48.99,
+        "price_str": "48,99 €"
+    },
+    {
+        "brand": "Zalando.it",
+        "description": "Calvin Klein Color Blocking Logo Placket Polo Colorblock black/white, Uomo, Taglia: XS, Nero",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSpRGbYq4evC06P_2nSl60sISP3PRgWjll0jxotMcmNjcUUa3c7kSHWIeM5XB9gdvhqw6lXKTsxy2kRMt4tZLxBNMhJFnfUzrNsLVHAI3N9AIJY7ar6nzgI&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/14977899306206440765",
+        "price": 80.99,
+        "price_str": "80,99 €"
+    },
+    {
+        "brand": "Abercrombie & Fitch",
+        "description": "Rugby Polo da Uomo in Black | Taille M | Abercrombie & Fitch",
+        "img": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRSniPa8i_IrNBMzoif4cZkyV-onLBdettgT6udNO8atgXZ7oR08BEh2QaoUGpzO242Wy5mIOXwWSIc0QeYDLpVP_PsqiHXcsk6_5OJukjodip2IbzTwZ2ROg&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/6846599318021183365",
+        "price": 42,
+        "price_str": "42,00 €"
+    },
+    {
+        "brand": "COS",
+        "description": "COS Women's Oversized Collar Long-Sleeve Shirt - Black - Camicia",
+        "img": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSm5fFOFE5Cr5Hmm5fCLgvxBg_tGapZEV47BT4W9Mqp3XJiTETE5pYTUfKpZN2NoHPc6EHbaIfX69kdLqKhmggUMB9hhQ3XIRxY1oVanCUUGhG8mPz-4DLD8Q&usqp=CAE",
+        "link": "https://www.google.com/aclk?sa=l&ai=DChcSEwjTsc_vrdL3AhUtHq0GHTi2Do0YABApGgJwdg&sig=AOD64_36mRQJK1UkNRtc-1Zv37OtlQcx2g&ctype=5&q=&ved=0ahUKEwjYssrvrdL3AhWuK0QIHSXND-0Q9A4IzhE&adurl=",
+        "price": 79,
+        "price_str": "79,00 €"
+    },
+    {
+        "brand": "Talia Collective",
+        "description": "Cap Ferret Shirt in Black",
+        "img": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSSguHyRMP-H0OSJqXpWAYvkZyhIWto1EcH6zjF9_63tU3RSR7CHHQdHuZKgj_zYWsJzgP62KGivryiyPcwrwdc68FROfhOKRBFRvt6Brtun6jErP5MXGqV&usqp=CAE",
+        "link": "https://www.google.com/shopping/product/9187504291367274881",
+        "price": 89,
+        "price_str": "89,00 €"
+    }
+]
 
 function capture(request) {
     return new Promise((resolve, reject) => {
@@ -188,6 +240,7 @@ function send_image_to_backend(tabId, image_b) {
 .then(async function (json) {
     chrome.tabs.sendMessage(tabId, {message: "remove_product_focus"}, (response) => {})
     console.log(tabId)
+    await LS.setItem("is_injected_capture_screen", false)
     chrome.tabs.sendMessage(tabId, {message: "open_side_panel"}, (response) => {})
     console.log(json)
     products_fetched = json
@@ -381,7 +434,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         sendResponse({mess: "DONE"})
     }
     else if(request.message === "Open Payment Page"){
-        var extpay = ExtPay('hochhhgdlncmknchdngodkccneibpopn'); 
+        var extpay = ExtPay('cjieiphfkblcbamafhefbjmelahlmfel'); 
         extpay.openPaymentPage()
         sendResponse({mess: "DONE"})
     }
@@ -393,6 +446,13 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             console.log("****different than null****")
             console.log(products_fetched)
             sendResponse({all_products_fetched: products_fetched})
+        }
+        else if (error_message != undefined) {
+            console.log("Error Fake Items - Sending")
+            sendResponse({error: true, all_products_fetched: error_fake_items})
+            setTimeout(() => {
+                error_message = undefined
+            }, 1000);
         }
         else {
             console.log("Prev_Search_Result: ")
@@ -461,11 +521,15 @@ const notify = e => chrome.notifications.create({
     message: e.message || e
     });
 //notify("ERROR")
+
+
 chrome.action.onClicked.addListener(
     async function (tab) {
-        if (await LS.getItem("user_token") != undefined) { //If already Signed Up
+        check_free_trial_expiration_date()
+        if (await LS.getItem("user_token") != undefined && await LS.getItem("is_injected_capture_screen") == false) { //If already Signed Up
             if (await LS.getItem("free_membership") == "ACTIVE" || await LS.getItem("premium_membership") == "ACTIVE") { // CHECK IF MEMBERSHIP IS ACTIVE
                 await LS.setItem("captured_Tab", tab.id)
+                await LS.setItem("is_injected_capture_screen", true)
                 console.log("Injecting CSS & JS")
                 injected_tab_id = tab.id
                 chrome.scripting.insertCSS({
@@ -483,6 +547,15 @@ chrome.action.onClicked.addListener(
                 });
             }
         }
+        else if (await LS.getItem("is_injected_capture_screen") == true) {
+            console.log("Removing Product Focus...")
+            await LS.setItem("is_injected_capture_screen", false)
+            chrome.scripting.removeCSS({
+                target: {tabId: tab.id},
+                files: ['./script/inject.js']   
+            })
+            chrome.runtime.reload()
+        }
         else { //If not signed up, open popup registration form
             chrome.notifications.create({
                 type: 'basic',
@@ -497,37 +570,61 @@ chrome.action.onClicked.addListener(
     )
 
 async function check_free_trial_expiration_date() {
-    let free_Member_sinc = await LS.getItem("free_member_since")
-    let free_Member_since = new Date(free_Member_sinc)
-    let oneDay = 86400000
-    let today_Date = new Date()
-    console.log("Checking if 14 days have passed")
-    let days_Passed_Since_Subscription = Math.round(Math.abs((free_Member_since - today_Date) / oneDay));
-    console.log(days_Passed_Since_Subscription)
-    if (days_Passed_Since_Subscription > free_trial_no_days) {
-        await LS.setItem("free_member_days_left", 0)
-        console.log("FREE TRIAL EXPIRED! Checking if subscribed")
-        var extpay = ExtPay('hochhhgdlncmknchdngodkccneibpopn'); 
-        extpay.getUser().then(async (user) => {
-            if (user.paid) {
-                await LS.setItem("premium_membership", "ACTIVE")
-            } else {
-                chrome.notifications.create({
-                    type: 'basic',
-                    iconUrl: 'Images/128.png',
-                    title: `Huyp`,
-                    message: "Your Free Trial Expired, Go Premium to keep using Huyp",
-                    priority: 1
-                })
-                await LS.setItem("free_membership", "INACTIVE")
-                extpay.openPaymentPage();
-            }
-        })    
+    console.log("**Checking expdate, Calling API***")
+    let user_token = await LS.getItem("user_token")
+    console.log(user_token)
+    params = {
+        user_token: user_token
+	}
+    var esc = encodeURIComponent;
+    var query_params = Object.keys(params)
+        .map(k => esc(k) + '=' + esc(params[k]))
+        .join('&');
+    let api_URL = api_trialTime_is_expired + query_params
+    console.log(api_URL)
+    fetch(api_URL, {
+
+    // Adding method type
+    method: "GET"
+})
+
+// Converting to JSON
+.then(response => response.json())
+
+.then(async (json) => {
+	if (json.free_trial_available == false) {
+		console.log(json)
+		await LS.setItem("free_membership", "INACTIVE")
+		chrome.notifications.create({
+            type: 'basic',
+			iconUrl: '../Images/128.png',
+			title: `Huyp - Your Free Trial Has Expired`,
+			message: "Please purchase our yearly plan to keep using Huyp",
+			priority: 1
+        })
+        chrome.tabs.query({active : true, lastFocusedWindow : true}, function (tabs) {
+            console.log("SENDIN ERROR MESSAGE - OPEN SLIDER")
+            var CurrTab = tabs[0];
+            error_message = true
+            chrome.tabs.sendMessage(CurrTab.id, {message: "open_side_panel"}, (response) => {})
+        })
+	}
+	else {
+        console.log(json)
     }
-    else {
-        await LS.setItem("free_member_days_left", free_trial_no_days - days_Passed_Since_Subscription)
-    }
+})
+
+.catch(function (err) {
+	chrome.notifications.create({
+		type: 'basic',
+		iconUrl: '../Images/128.png',
+		title: `Huyp - Error`,
+		message: JSON.stringify(err),
+		priority: 1
+	})
+	//document.getElementById("error-login").innerText = JSON.stringify(err)
 }
+)}
 
 chrome.runtime.onInstalled.addListener(async (details) => {
     if(details.reason == "install"){
@@ -539,8 +636,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         console.log("ONINSTALL STORAGE SET UP")
         await LS.setItem("all_favorites", [])
         await LS.setItem("free_membership", "ACTIVE")
-        await LS.setItem("free_member_days_left", free_trial_no_days)
+        await LS.setItem("is_injected_capture_screen", false)
         await LS.setItem("premium_membership", "INACTIVE")
         await LS.setItem("free_member_since", today.toString())
+        await LS.setItem("error_fake_items", error_fake_items)
 }});
-check_free_trial_expiration_date()
+//check_free_trial_expiration_date()
