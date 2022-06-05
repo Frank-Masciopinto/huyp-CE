@@ -94,10 +94,9 @@ function call_API_SignUp(account_details) {
 	else throw json.error
 })
 .then(function (json) { 
-	chrome.runtime.sendMessage({message: "Open Payment Page"})
 	setTimeout(() => {
 		window.close()
-	}, 2000);
+	}, 1400);
 })
 
 .catch(function (err) {
@@ -138,26 +137,26 @@ function call_API_LogIn(account_details) {
 	if (json.user_token != "") {
 		console.log(json)
 		await LS.setItem("user_token", json.user_token)
-		chrome.notifications.create({
-			type: 'basic',
-			iconUrl: '../Images/128.png',
-			title: `Huyp - Logged In Successfully`,
-			message: "Welcome Back!",
-			priority: 1
-			})
+		// chrome.notifications.create({
+		// 	type: 'basic',
+		// 	iconUrl: '../Images/128.png',
+		// 	title: `Huyp - Logged In Successfully`,
+		// 	message: "Welcome Back!",
+		// 	priority: 1
+		// 	})
 	}
 	else throw json.error
 })
 .then((json) => window.close())
 
 .catch(function (err) {
-	chrome.notifications.create({
-		type: 'basic',
-		iconUrl: '../Images/128.png',
-		title: `Huyp - Error Logging In`,
-		message: JSON.stringify(err),
-		priority: 1
-	})
+	// chrome.notifications.create({
+	// 	type: 'basic',
+	// 	iconUrl: '../Images/128.png',
+	// 	title: `Huyp - Error Logging In`,
+	// 	message: JSON.stringify(err),
+	// 	priority: 1
+	// })
 	document.getElementById("error-login").innerText = JSON.stringify(err)
 }
 )}

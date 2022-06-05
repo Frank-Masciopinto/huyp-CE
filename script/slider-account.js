@@ -77,20 +77,30 @@ async function update_account_info(account_info_div) {
   account_info_div.appendChild(email)
 }
 
-let cancel_subscription_btn = document.querySelector("#unsubscribe")
-cancel_subscription_btn.addEventListener("click", async () => {
-  if (await LS.getItem("premium_membership") != "ACTIVE") {
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: '../Images/128.png',
-      title: `Huyp`,
-      message: "There is no active subscription.",
-      priority: 1
-  })
+async function check_if_paid_show_unsubscribe_button() {
+
+  let cancel_subscription_btn = document.querySelector("#unsubscribe")
+  if (await LS.getItem("premium_membership") == "INACTIVE") {
+    cancel_subscription_btn.setAttribute("style", "display: none;")
   }
-  chrome.runtime.sendMessage({message: "Open Payment Page"})
-})
+  else {
+    cancel_subscription_btn.addEventListener("click", async () => {
+      if (await LS.getItem("premium_membership") != "ACTIVE") {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: '../Images/128.png',
+          title: `Huyp`,
+          message: "There is no active subscription.",
+          priority: 1
+      })
+      }
+      chrome.runtime.sendMessage({message: "Open Payment Page"})
+    })
+  }
+}
+
 
 let account_info_div = document.getElementById("account-information")
 update_account_info(account_info_div)
+check_if_paid_show_unsubscribe_button()
 

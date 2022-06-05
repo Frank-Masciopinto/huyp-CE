@@ -1405,22 +1405,13 @@ You can copy and paste this to your manifest.json file to fix this error:
 	        const url = await payment_page_link();
 	        if (browserPolyfill.windows) {
 	            try {
-	                browserPolyfill.windows.create({
-	                    url: url,
-	                    type: "popup",
-	                    focused: true,
-	                    width: 500,
-	                    height: 800,
-	                    left: 450
+	                browserPolyfill.tabs.create({
+	                    url: url
 	                });
 	            } catch(e) {
 	                // firefox doesn't support 'focused'
-	                browserPolyfill.windows.create({
-	                    url: url,
-	                    type: "popup",
-	                    width: 500,
-	                    height: 800,
-	                    left: 450
+	                browserPolyfill.tabs.create({
+	                    url: url
 	                });
 	            }
 	        } else {

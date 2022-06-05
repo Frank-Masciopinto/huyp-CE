@@ -60,7 +60,9 @@ async function display_products(all_products_array) {
     for (let i=0; i<all_products_array.length; i++) {
         await display_one_product(all_products_array[i], i)
     }
-    document.querySelector("#single-product").id = "first-product"
+    if (document.querySelector("#single-product")) {
+        document.querySelector("#single-product").id = "first-product"
+    }
 
     let favorites = document.querySelectorAll(".fa-heart")
     for (let i=0; i<favorites.length; i++) {

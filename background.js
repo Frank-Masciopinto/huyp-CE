@@ -4,7 +4,7 @@ const LS = {
     setItem: (key, val) => chrome.storage.local.set({[key]: val}),
     removeItems: keys => chrome.storage.local.remove(keys),
   };
-let  api_trialTime_is_expired = "http://143.198.149.10/trial_countdown/?"
+let  api_trialTime_is_expired = "http://143.198.149.10:8080/trial_countdown/?"
 let free_trial_no_days = 2
 importScripts('ExtPay.js')
 var extpay = ExtPay('cjieiphfkblcbamafhefbjmelahlmfel'); 
@@ -450,9 +450,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         else if (error_message != undefined) {
             console.log("Error Fake Items - Sending")
             sendResponse({error: true, all_products_fetched: error_fake_items})
-            setTimeout(() => {
-                error_message = undefined
-            }, 1000);
         }
         else {
             console.log("Prev_Search_Result: ")
@@ -525,7 +522,7 @@ const notify = e => chrome.notifications.create({
 
 chrome.action.onClicked.addListener(
     async function (tab) {
-        check_free_trial_expiration_date()
+        await check_free_trial_expiration_date()
         if (await LS.getItem("user_token") != undefined && await LS.getItem("is_injected_capture_screen") == false) { //If already Signed Up
             if (await LS.getItem("free_membership") == "ACTIVE" || await LS.getItem("premium_membership") == "ACTIVE") { // CHECK IF MEMBERSHIP IS ACTIVE
                 await LS.setItem("captured_Tab", tab.id)
@@ -570,61 +567,64 @@ chrome.action.onClicked.addListener(
     )
 
 async function check_free_trial_expiration_date() {
-    console.log("**Checking expdate, Calling API***")
-    let user_token = await LS.getItem("user_token")
-    console.log(user_token)
-    params = {
-        user_token: user_token
-	}
-    var esc = encodeURIComponent;
-    var query_params = Object.keys(params)
-        .map(k => esc(k) + '=' + esc(params[k]))
-        .join('&');
-    let api_URL = api_trialTime_is_expired + query_params
-    console.log(api_URL)
-    fetch(api_URL, {
-
-    // Adding method type
-    method: "GET"
-})
-
-// Converting to JSON
-.then(response => response.json())
-
-.then(async (json) => {
-	if (json.free_trial_available == false) {
-		console.log(json)
-		await LS.setItem("free_membership", "INACTIVE")
-		chrome.notifications.create({
-            type: 'basic',
-			iconUrl: '../Images/128.png',
-			title: `Huyp - Your Free Trial Has Expired`,
-			message: "Please purchase our yearly plan to keep using Huyp",
-			priority: 1
-        })
-        chrome.tabs.query({active : true, lastFocusedWindow : true}, function (tabs) {
-            console.log("SENDIN ERROR MESSAGE - OPEN SLIDER")
-            var CurrTab = tabs[0];
-            error_message = true
-            chrome.tabs.sendMessage(CurrTab.id, {message: "open_side_panel"}, (response) => {})
-        })
-	}
-	else {
+    return new Promise(async (res, rej) => {
+        console.log("**Checking expdate, Calling API***")
+        let user_token = await LS.getItem("user_token")
+        console.log(user_token)
+        params = {
+            user_token: user_token
+        }
+        var esc = encodeURIComponent;
+        var query_params = Object.keys(params)
+            .map(k => esc(k) + '=' + esc(params[k]))
+            .join('&');
+        let api_URL = api_trialTime_is_expired + query_params
+        console.log(api_URL)
+        fetch(api_URL, {
+    
+        // Adding method type
+        method: "GET"
+    })
+    
+    // Converting to JSON
+    .then((response) => {
+        console.log("Response if FREE Member below")
+        console.log(response)
+        return response.json()
+    } )
+    
+    .then(async (json) => {
         console.log(json)
-    }
-})
-
-.catch(function (err) {
-	chrome.notifications.create({
-		type: 'basic',
-		iconUrl: '../Images/128.png',
-		title: `Huyp - Error`,
-		message: JSON.stringify(err),
-		priority: 1
-	})
-	//document.getElementById("error-login").innerText = JSON.stringify(err)
+        if (json.free_trial_available == true) {
+            await LS.setItem("free_membership", "INACTIVE")
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: '../Images/128.png',
+                title: `Huyp - Your Free Trial Has Expired`,
+                message: "Please purchase our yearly plan to keep using Huyp",
+                priority: 1
+            })
+            chrome.tabs.query({active : true, lastFocusedWindow : true}, function (tabs) {
+                console.log("SENDIN ERROR MESSAGE - OPEN SLIDER")
+                var CurrTab = tabs[0];
+                error_message = true
+                chrome.tabs.sendMessage(CurrTab.id, {message: "open_side_panel"}, (response) => {})
+            })
+            res()
+        }
+        else {
+            console.log(json)
+            res()
+        }
+    })
+    
+    .catch(function (err) {
+        console.log("Server response error, for free trial... <---")
+        //document.getElementById("error-login").innerText = JSON.stringify(err)
+        res()
+    })
+    })
 }
-)}
 
 chrome.runtime.onInstalled.addListener(async (details) => {
     if(details.reason == "install"){

@@ -8,7 +8,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   console.log(request)
   if (request.message == "remove_product_focus") {
     let product_focus = document.querySelector(".itrisearch-box")
-    product_focus.parentNode.removeChild(product_focus)
+    try {
+      product_focus.parentNode.removeChild(product_focus)
+    }
+    catch {}
+    sendResponse({mess: "DONE"})
   }
   })
 
